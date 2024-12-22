@@ -1,5 +1,5 @@
 {
-    "name": "cav-flight-center-background",
+    "name": "cav-live-flights-background",
     "scripts": {
         "build": "npx webpack --config webpack.config.js"
     },

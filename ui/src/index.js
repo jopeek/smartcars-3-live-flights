@@ -5,14 +5,14 @@ import { BrowserRouter } from "react-router-dom";
 import { createRoot } from "react-dom/client";
 
 import "@tfdidesign/smartcars3-ui-sdk/css/smartcars.css";
-import "./flight-center.css";
+import "./live-flights.css";
 
 const container = document.getElementById("root");
 const root = createRoot(container);
 
 root.render(
     <React.StrictMode>
-        <BrowserRouter basename="/plugins/com.cav.flight-center">
+        <BrowserRouter basename="/plugins/com.cav.live-flights">
             <App />
         </BrowserRouter>
     </React.StrictMode>,
