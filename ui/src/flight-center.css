@@ -1,0 +1,90 @@
+body {
+  background-color: transparent !important;
+}
+
+#callsignBox {
+  background: none;
+  border-bottom: 1px solid rgba(var(--va-accent-back-color), 1);
+}
+
+.modal-background {
+  position: fixed;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background-color: rgba(0, 0, 0, 0.75);
+}
+
+.loading {
+  opacity: 100%;
+  position: relative;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.inline-flex {
+  display: inline-flex !important;
+}
+
+.iconify {
+  margin-right: 0.25rem;
+  font-size: 1rem;
+  margin-top: 2px;
+}
+
+.img-circle {
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+img.airlineImage,
+img.countryImage,
+img.aircraftImage {
+  width: 20px;
+  height: 20px;
+  margin-right: 0.25rem;
+}
+
+.bg-slate {
+  background-color: rgb(241 245 249);
+}
+
+.text-green-500 {
+  color: rgb(34 197 94);
+}
+
+.grid div {
+  margin-right: 0.5rem;
+}
+
+.button-disabled {
+  background-color: #d3d3d3; /* Light grey background */
+  cursor: not-allowed; /* Change cursor to indicate disabled state */
+  opacity: 0.6; /* Reduce opacity */
+}
+
+.info-alert {
+  display: flex;
+  align-items: flex-start; 
+  padding: 1rem; 
+  margin-bottom: 1rem; 
+  background-color: #032830; 
+  border: 1px solid #087990;
+  border-radius: 0.5rem; 
+  color: #6edff6; 
+}
+
+.info-alert-icon {
+  width: 1.5rem; 
+  height: 1.5rem; 
+  flex-shrink: 0; 
+  margin-right: 0.75rem; 
+  color: #6edff6; 
+}
+
+.info-alert-content {
+  font-size: 1rem; 
+  font-weight: 500; 
+}

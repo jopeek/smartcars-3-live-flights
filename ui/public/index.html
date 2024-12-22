@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="theme-color" content="#000000" />
+        <meta name="description" content="CAV Flight Center plugin for SC3" />
+        <title>CAV Flight Center</title>
+    </head>
+    <body>
+        <noscript>You need to enable JavaScript to run this app.</noscript>
+        <script>
+            const colorToRGB = (color) => {
+                if (!!!color) return color;
+                if (color[0] === "#") {
+                    color = color.slice(1);
+                }
+                const num = parseInt(color, 16);
+                const r = num >> 16;
+                const g = (num >> 8) & 255;
+                const b = num & 255;
+                return [r, g, b];
+            };
+            const applyAppColor = (document, darkMode = false) => {
+                let backColor = "#242424";
+                let backAccentColor = "#565656";
+                let foreColor = "#ffffff";
+                let foreAccentColor = "#a0a0a0";
+                let intBackColor = "#444444";
+
+                if (darkMode === false) {
+                    backColor = "#ffffff";
+                    backAccentColor = "#e6e9ec";
+                    foreColor = "#565656";
+                    foreAccentColor = "#8b8b8b";
+                    intBackColor = "#cbcbcb";
+                }
+
+                document.documentElement.style.setProperty(
+                    "--background-color",
+                    backColor,
+                );
+
+                document.documentElement.style.setProperty(
+                    "--background-accent-color",
+                    backAccentColor,
+                );
+
+                document.documentElement.style.setProperty(
+                    "--foreground-color",
+                    foreColor,
+                );
+
+                document.documentElement.style.setProperty(
+                    "--foreground-accent-color",
+                    foreAccentColor,
+                );
+
+                document.documentElement.style.setProperty(
+                    "--background-interactive-color",
+                    intBackColor,
+                );
+            };
+
+            const applyVAColor = (document, foreColor, backColor) => {
+                if (!!foreColor) {
+                    document.documentElement.style.setProperty(
+                        "--va-accent-fore-color",
+                        foreColor,
+                    );
+                }
+                if (!!backColor) {
+                    document.documentElement.style.setProperty(
+                        "--va-accent-back-color",
+                        colorToRGB(backColor),
+                    );
+                }
+            };
+
+            const urlParams = new URLSearchParams(window.location.search);
+            const darkmode = urlParams.get("darkmode") === "true";
+            const foreColor = urlParams.get("forecolor");
+            const backColor = urlParams.get("backcolor");
+
+            applyAppColor(document, darkmode);
+            applyVAColor(document, foreColor, backColor);
+        </script>
+        <div id="root"></div>
+        <script src="https://code.iconify.design/3/3.1.0/iconify.min.js"></script>
+    </body>
+</html>
