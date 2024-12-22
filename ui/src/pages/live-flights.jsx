@@ -37,16 +37,17 @@ const LiveFlightTable = (props) => {
         },
       });
 
-      setFlightsLoading(response);
+      console.log(response); // Logs the response for debugging
+      setFlights(response); // Update the flights state with the response data
     } catch (error) {
-      setFlights([]);
-
+      console.error("Error fetching flights:", error);
+      setFlights([]); // Set flights to an empty array in case of an error
       notify("live-flights", null, null, {
-        message: "Failed to get dispatched flights",
+        message: "Failed to get live flights",
         type: "danger",
       });
     }
-    setFlightsLoading(false);
+    setFlightsLoading(false); // Stop the loading spinner
   };
 
   const setHeight = (elID) => {
@@ -106,10 +107,33 @@ const LiveFlightTable = (props) => {
       </div>
 
       <div id="tblBody" className="overflow-y-auto pl-8">
-        {flights.length > 0 && props.airports.length > 0 ? (
+        {flights.length > 0 ? (
           flights.map((flight) => (
-            <div key={flight.bidID} style={{ width: `${width}px` }}>
-              test
+            <div
+              key={flight.id}
+              className="data-table-row grid grid-cols-10 p-3 mt-1 mr-8 border-b"
+            >
+              <div
+                className="col-span-2 text-left"
+                dangerouslySetInnerHTML={{ __html: flight.flightnum }}
+              ></div>
+              <div
+                className="text-left"
+                dangerouslySetInnerHTML={{ __html: flight.depicao }}
+              ></div>
+              <div
+                className="text-left"
+                dangerouslySetInnerHTML={{ __html: flight.arricao }}
+              ></div>
+              <div className="text-left">{flight.distremain}</div>
+              <div
+                className="text-left"
+                dangerouslySetInnerHTML={{ __html: flight.type }}
+              ></div>
+              <div
+                className="col-span-3 text-left"
+                dangerouslySetInnerHTML={{ __html: flight.aircraft }}
+              ></div>
             </div>
           ))
         ) : (
@@ -125,11 +149,7 @@ const LiveFlightTable = (props) => {
 const LiveFlights = ({ identity }) => {
   const [isLoading, setIsLoading] = useState(false);
 
-  return (
-    <LiveFlightTable
-      loading={isLoading}
-    />
-  );
+  return <LiveFlightTable loading={isLoading} />;
 };
 
 export default LiveFlights;
