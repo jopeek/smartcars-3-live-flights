@@ -63,28 +63,28 @@ module.exports = {
           }
         },
       },
-      // map_data: {
-      //   description: "Endpoint to retrieve map data",
-      //   handler: async (req, res) => {
-      //     try {
-      //       let params = {};
+      path_data: {
+        description: "Endpoint to retrieve path data",
+        handler: async (req, res) => {
+          try {
+            let params = { ...req.query }; // Include all query parameters
 
-      //       const response = await axios({
-      //         url: `${scIdentity.airline.settings.scriptURL}flights/map_data`,
-      //         method: "GET",
-      //         params: params,
-      //         headers: {
-      //           Authorization: `Bearer ${scIdentity.va_user.session}`,
-      //         },
-      //       });
+            const response = await axios({
+              url: `${scIdentity.airline.settings.scriptURL}flights/path_data`,
+              method: "GET",
+              params: params,
+              headers: {
+                Authorization: `Bearer ${scIdentity.va_user.session}`,
+              },
+            });
 
-      //       return res.json(response.data);
-      //     } catch (error) {
-      //       log("Error while retrieving map data", "error", error);
-      //       return res.status(500).json({});
-      //     }
-      //   },
-      // },
+            return res.json(response.data);
+          } catch (error) {
+            log("Error while retrieving path data", "error", error);
+            return res.status(500).json({});
+          }
+        },
+      },
     },
   },
   post: {},

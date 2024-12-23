@@ -52,6 +52,7 @@ const MapComponent = forwardRef(
   ({ mapData, setSelectedMarker: externalSetSelectedMarker }, ref) => {
     const [processedMapData, setProcessedMapData] = useState([]); // Holds processed marker data
     const [mapStyle, setMapStyle] = useState(null); // Holds map style data
+    const [pathData, setPathData] = useState(null); // Holds map style data
     const [loading, setLoading] = useState(false); // Tracks loading state
     const [selectedMarker, setSelectedMarker] = useState(null); // Tracks selected marker
     const markerRefs = useRef([]); // Store references to markers
@@ -111,6 +112,22 @@ const MapComponent = forwardRef(
       }
     };
 
+    const getPathData = async (id) => {
+      try {
+        const response = await axios({
+          url: `${baseUrl}path_data`,
+          params: { id },
+          method: "GET",
+        });
+
+        setPathData(
+          response.data.map((point) => [point.Latitude, point.Longitude])
+        );
+      } catch (error) {
+        console.error("Error while getting path data", error);
+      }
+    };
+
     // Processes raw map data into a usable format
     const processMapData = useCallback((data) => {
       return data.map((item) => ({
@@ -123,6 +140,7 @@ const MapComponent = forwardRef(
         arrival: [item.arrLat, item.arrLong], // Arrival coordinates
         depIcao: item.depicaoRaw, // Add departure ICAO
         arrIcao: item.arricaoRaw, // Add arrival ICAO
+        actmpId: item.actmpId,
       }));
     }, []);
 
@@ -180,6 +198,7 @@ const MapComponent = forwardRef(
       if (externalSetSelectedMarker) {
         externalSetSelectedMarker(item);
       }
+      getPathData(item.actmpId); // Call getPathData with the pilotId
     };
 
     useImperativeHandle(ref, () => ({
@@ -194,6 +213,7 @@ const MapComponent = forwardRef(
           arrival: [item.arrLat, item.arrLong], // Arrival coordinates
           depIcao: item.depicaoRaw, // Add departure ICAO
           arrIcao: item.arricaoRaw, // Add arrival ICAO
+          actmpId: item.actmpId,
         });
         const marker = markerRefs.current.find(
           (ref) =>
@@ -304,6 +324,10 @@ const MapComponent = forwardRef(
                 </Marker>
               </>
             )}
+
+          {pathData && pathData.length > 0 && (
+            <Polyline positions={pathData} color="#c50202" />
+          )}
         </MapContainer>
       </div>
     );
