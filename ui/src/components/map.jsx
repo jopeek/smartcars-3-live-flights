@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Popup, Polyline } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import axios from "axios";
 import L from "leaflet";
@@ -82,6 +82,8 @@ const MapComponent = () => {
       rotationAngle: item.statHdg || 0, // Include rotation angle for markers
       icon: item.icon, // Include icon URL for markers
       popupContent: generatePopupContent(item), // Generate popup content
+      departure: [item.startLat, item.startLong], // Departure coordinates
+      arrival: [item.arrLat, item.arrLong], // Arrival coordinates
     }));
   }, []);
 
@@ -106,7 +108,6 @@ const MapComponent = () => {
 
   // Generates popup content based on data properties
   const generatePopupContent = (item) => {
-    console.log(item);
     return `
         <div class="flex items-center">
             ${item.flightNumber}
@@ -174,6 +175,7 @@ const MapComponent = () => {
 
         {/* Render map markers */}
         {mapData.map((marker, index) => (
+            <>
           <Marker
             key={index}
             position={[marker.lat, marker.lng]}
@@ -188,6 +190,14 @@ const MapComponent = () => {
               <div dangerouslySetInnerHTML={{ __html: marker.popupContent }} />
             </Popup>
           </Marker>
+          {/* Render dashed line between departure and arrival */}
+          {marker.departure && marker.arrival && (
+              <Polyline
+                positions={[marker.departure, marker.arrival]}
+                pathOptions={{ color: "#999999", dashArray: "5, 5", weight: 2 }}
+              />
+            )}
+          </>
         ))}
       </MapContainer>
     </div>
