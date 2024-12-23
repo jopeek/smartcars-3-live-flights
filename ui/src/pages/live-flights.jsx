@@ -55,6 +55,7 @@ const LiveFlightTable = (props) => {
     setSelectedFlight(flight);
     if (mapRef.current) {
       mapRef.current.selectMarker(flight);
+      window.scrollTo(0, 0); // Scroll to the top of the window
     }
   };
 
