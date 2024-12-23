@@ -1,31 +1,16 @@
 /*  eslint-disable react-hooks/exhaustive-deps */
 import React from "react";
-import { useState, useRef } from "react";
-import { request, notify, localApi } from "@tfdidesign/smartcars3-ui-sdk";
+import { useState } from "react";
+import { request, notify } from "@tfdidesign/smartcars3-ui-sdk";
 import { useEffect } from "react";
 import { useLayoutEffect } from "react";
-import { Link } from "react-router-dom";
 import MapContainer from "../components/map";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-  faCalendar,
-  faCalendarDay,
-  faGlobe,
-  faPlaneArrival,
-  faRefresh,
-  faSuitcase,
-} from "@fortawesome/free-solid-svg-icons";
 
 const baseUrl = "http://localhost:7172/api/com.cav.live-flights/";
 
 const LiveFlightTable = (props) => {
-  const [logBookInstalled, setLogBookInstalled] = useState(false);
   const [flightsLoading, setFlightsLoading] = useState(false);
-  const [expandedFlight, setExpandedFlight] = useState(null);
   const [flights, setFlights] = useState([]);
-  const [recoverableFlight, setRecoverableFlight] = useState(null);
-  const [width, setWidth] = useState(0);
-  const widthRef = useRef(null);
 
   const getFlights = async () => {
     setFlightsLoading(true);
@@ -53,21 +38,20 @@ const LiveFlightTable = (props) => {
   const setHeight = (elID) => {
     const el = document.getElementById(elID);
     if (!!!el) return;
-    const viewHeight = window.innerHeight;
-    const elOffTop = el.offsetTop;
-    const marginBottom = 0;
-    const newHeight = viewHeight - elOffTop - marginBottom;
+    const newHeight = getHeight();
     el.style.height = newHeight + "px";
   };
 
-  const updateWidth = () => {
-    if (!widthRef.current) return;
-    setWidth(widthRef.current.offsetWidth);
-  };
+  const getHeight = () => {
+    const viewHeight = window.innerHeight;
+    const marginBottom = 0;
+    const newHeight = (viewHeight - marginBottom) / 2;
+    return newHeight;
+  }
 
   const onWindowResize = () => {
     setHeight("tblBody");
-    updateWidth();
+    setHeight("mapContainer");
   };
 
   useEffect(() => {
@@ -76,7 +60,7 @@ const LiveFlightTable = (props) => {
 
   useLayoutEffect(() => {
     setHeight("tblBody");
-    updateWidth();
+    setHeight("mapContainer");
   }, []);
 
   useEffect(() => {
@@ -94,14 +78,13 @@ const LiveFlightTable = (props) => {
         <h2 className="color-accent-bkg col-span-12">Live Flights</h2>
       </div>
 
-      <div className="grid grid-cols-12 mb-3 mx-8 map">
+      <div id="mapContainer" className="grid-cols-12 mb-3 mx-8 map">
         <span className="color-accent-bkg col-span-12">
-          <MapContainer center={[51.505, -0.09]} zoom={13} style={{ height: "100vh", width: "100%" }} />
+          <MapContainer center={[51.505, -0.09]} zoom={13} style={{ height: "50vh", width: "100%" }} />
         </span>
       </div>
 
       <div
-        ref={widthRef}
         className="grid grid-cols-12 data-table-header p-3 mt-3 mx-8"
       >
         <div className="text-left">Flight Number</div>
@@ -166,7 +149,7 @@ const LiveFlightTable = (props) => {
 };
 
 const LiveFlights = ({ identity }) => {
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading] = useState(false);
 
   return <LiveFlightTable loading={isLoading} />;
 };

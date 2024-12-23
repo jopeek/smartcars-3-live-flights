@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useCallback } from "react";
+import { request, notify, applyAppColor, applyVAColor } from "@tfdidesign/smartcars3-ui-sdk";
 import {
   MapContainer,
   TileLayer,
@@ -9,6 +10,7 @@ import {
 import "leaflet/dist/leaflet.css";
 import axios from "axios";
 import L from "leaflet";
+import arc from "arc";
 
 delete L.Icon.Default.prototype._getIconUrl;
 
@@ -19,6 +21,15 @@ L.Icon.Default.mergeOptions({
 });
 
 const baseUrl = "http://localhost:7172/api/com.cav.live-flights/";
+
+const generateArcPath = (start, end) => {
+  const generator = new arc.GreatCircle(
+    { x: start[1], y: start[0] }, // Longitude, Latitude for start
+    { x: end[1], y: end[0] } // Longitude, Latitude for end
+  );
+  const line = generator.Arc(100, { offset: 10 }); // Generates 100 intermediate points
+  return line.geometries[0].coords.map(([lng, lat]) => [lat, lng]); // Convert to Leaflet format
+};
 
 const MapComponent = () => {
   const [mapStyle, setMapStyle] = useState(null); // Holds map style data
@@ -159,6 +170,8 @@ const MapComponent = () => {
                 <path fill="currentColor" d="M13 2v2c4.39.54 7.5 4.53 6.96 8.92A8.014 8.014 0 0 1 13 19.88v2c5.5-.6 9.45-5.54 8.85-11.03C21.33 6.19 17.66 2.5 13 2m-2 0c-1.96.18-3.81.95-5.33 2.2L7.1 5.74c1.12-.9 2.47-1.48 3.9-1.68zM4.26 5.67A9.8 9.8 0 0 0 2.05 11h2c.19-1.42.75-2.77 1.64-3.9zM2.06 13c.2 1.96.97 3.81 2.21 5.33l1.42-1.43A8 8 0 0 1 4.06 13zm5 5.37l-1.39 1.37A10 10 0 0 0 11 22v-2a8 8 0 0 1-3.9-1.63z"></path>
             </svg>${item.statStage}
         </div>
+        <hr>
+        <div class="progress" role="progressbar" aria-valuenow="${item.perc_complete}" aria-valuemin="0" aria-valuemax="100" style="margin-bottom: initial; height: 1.5rem;"><div class="progress-bar-striped progress-bar text-bg-warning" style="margin-bottom: inherit; width: ${item.perc_complete}%">${item.perc_complete}%</div></div>
     `;
   };
 
@@ -175,7 +188,7 @@ const MapComponent = () => {
       <MapContainer
         center={[0, 0]}
         zoom={2}
-        style={{ height: "100vh", width: "100%" }}
+        style={{ height: "50vh", width: "100%" }}
       >
         {/* Render map tiles */}
         {mapStyle && (
@@ -210,8 +223,12 @@ const MapComponent = () => {
           selectedMarker.departure &&
           selectedMarker.arrival && (
             <>
+              {/* Generate curved path */}
               <Polyline
-                positions={[selectedMarker.departure, selectedMarker.arrival]}
+                positions={generateArcPath(
+                  selectedMarker.departure,
+                  selectedMarker.arrival
+                )}
                 pathOptions={{ color: "#999999", dashArray: "5, 5", weight: 2 }}
               />
               <Marker
