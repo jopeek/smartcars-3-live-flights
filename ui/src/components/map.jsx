@@ -4,7 +4,7 @@ import React, {
   useCallback,
   useImperativeHandle,
   forwardRef,
-  useRef
+  useRef,
 } from "react";
 import {
   MapContainer,
@@ -12,6 +12,7 @@ import {
   Marker,
   Popup,
   Polyline,
+  useMap,
 } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import axios from "axios";
@@ -35,6 +36,16 @@ const generateArcPath = (start, end) => {
   );
   const line = generator.Arc(100, { offset: 10 }); // Generates 100 intermediate points
   return line.geometries[0].coords.map(([lng, lat]) => [lat, lng]); // Convert to Leaflet format
+};
+
+const FitBounds = ({ bounds }) => {
+  const map = useMap();
+  useEffect(() => {
+    if (bounds && bounds.length > 0) {
+      map.fitBounds(bounds);
+    }
+  }, [bounds, map]);
+  return null;
 };
 
 const MapComponent = forwardRef(
@@ -222,13 +233,12 @@ const MapComponent = forwardRef(
 
     if (loading) return <div>Loading map...</div>; // Show loading indicator
 
+    const bounds = mapData.map((marker) => [marker.lat, marker.lng]);
+
     return (
       <div>
-        <MapContainer
-          center={[0, 0]}
-          zoom={2}
-          style={{ height: "50vh", width: "100%" }}
-        >
+        <MapContainer style={{ height: "50vh", width: "100%" }}>
+          <FitBounds bounds={bounds} />
           {/* Render map tiles */}
           {mapStyle && (
             <TileLayer url={mapStyle.url} attribution={mapStyle.attribution} />
