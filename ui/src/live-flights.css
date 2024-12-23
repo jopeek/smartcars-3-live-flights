@@ -7,6 +7,36 @@ body {
   border-bottom: 1px solid rgba(var(--va-accent-back-color), 1);
 }
 
+a {
+  color: inherit;
+}
+
+a:hover {
+  color: inherit;
+}
+
+.fw-lighter {
+  font-weight: lighter !important;
+  opacity: 0.5 !important;
+}
+.fs-7 {
+  font-size: 0.8rem !important;
+}
+
+.map {
+  border: 1px solid var(--background-accent-color);
+  border-radius: 4px;
+}
+
+.leaflet-popup.leaflet-zoom-animated,
+.leaflet-popup-content-wrapper {
+  margin-right: 0 !important;
+}
+
+.leaflet-popup-content div {
+  margin-bottom: 0.2rem;
+}
+
 .modal-background {
   position: fixed;
   left: 0;
@@ -15,6 +45,20 @@ body {
   height: 100%;
   overflow: hidden;
   background-color: rgba(0, 0, 0, 0.75);
+}
+
+.items-center {
+  align-items: center;
+}
+.flex {
+  display: flex;
+}
+
+.marker,
+.aircraft,
+.text-nowrap a {
+  display: flex;
+  align-items: center;
 }
 
 .loading {
@@ -41,7 +85,8 @@ body {
 
 img.airlineImage,
 img.countryImage,
-img.aircraftImage {
+img.aircraftImage,
+img.profileImage {
   width: 20px;
   height: 20px;
   margin-right: 0.25rem;

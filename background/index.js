@@ -2,7 +2,6 @@ const axios = __non_webpack_require__("axios");
 const { log } = require("@tfdidesign/smartcars3-background-sdk");
 
 let scIdentity = null;
-let config = null;
 
 module.exports = {
   onStart: async (identity) => {
@@ -23,7 +22,6 @@ module.exports = {
       flights: {
         description: "Endpoint to list live flights",
         handler: async (req, res) => {
-
           try {
             let params = {};
 
@@ -43,8 +41,51 @@ module.exports = {
           }
         },
       },
-    },
-    post: {
+      map_style: {
+        description: "Endpoint to retrieve map style",
+        handler: async (req, res) => {
+          try {
+            let params = {};
+
+            const response = await axios({
+              url: `${scIdentity.airline.settings.scriptURL}pilot/map_style`,
+              method: "GET",
+              params: params,
+              headers: {
+                Authorization: `Bearer ${scIdentity.va_user.session}`,
+              },
+            });
+
+            return res.json(response.data);
+          } catch (error) {
+            log("Error while retrieving map style", "error", error);
+            return res.status(500).json({});
+          }
+        },
+      },
+      map_data: {
+        description: "Endpoint to retrieve map data",
+        handler: async (req, res) => {
+          try {
+            let params = {};
+
+            const response = await axios({
+              url: `${scIdentity.airline.settings.scriptURL}flights/map_data`,
+              method: "GET",
+              params: params,
+              headers: {
+                Authorization: `Bearer ${scIdentity.va_user.session}`,
+              },
+            });
+
+            return res.json(response.data);
+          } catch (error) {
+            log("Error while retrieving map data", "error", error);
+            return res.status(500).json({});
+          }
+        },
+      },
     },
   },
+  post: {},
 };
