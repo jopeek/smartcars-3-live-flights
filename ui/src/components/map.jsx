@@ -151,14 +151,14 @@ const MapComponent = forwardRef(
             ${item.flightnum}
         </div>
         <div class="flex items-center">
+            ${item.pilot}
+        </div>
+        <div class="flex items-center">
             ${item.depicao} 
             <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" role="img" width="1em" height="1em" viewBox="0 0 24 24" data-icon="mdi:arrow-right-thin" class="iconify iconify--mdi">
                 <path fill="currentColor" d="M14 16.94v-4H5.08l-.03-2.01H14V6.94l5 5Z"></path>
             </svg> 
             ${item.arricao}
-        </div>
-        <div class="flex items-center">
-            ${item.pilot}
         </div>
         <div class="flex items-center">
             <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" role="img" width="1em" height="1em" viewBox="0 0 24 24" data-icon="material-symbols-light:altitude-outline" class="iconify iconify--material-symbols-light">
