@@ -49,9 +49,9 @@ const FitBounds = ({ bounds }) => {
 };
 
 const MapComponent = forwardRef(
-  ({ setSelectedMarker: externalSetSelectedMarker }, ref) => {
+  ({ mapData, setSelectedMarker: externalSetSelectedMarker }, ref) => {
+    const [processedMapData, setProcessedMapData] = useState([]); // Holds processed marker data
     const [mapStyle, setMapStyle] = useState(null); // Holds map style data
-    const [mapData, setMapData] = useState([]); // Holds marker data for the map
     const [loading, setLoading] = useState(false); // Tracks loading state
     const [selectedMarker, setSelectedMarker] = useState(null); // Tracks selected marker
     const markerRefs = useRef([]); // Store references to markers
@@ -125,25 +125,6 @@ const MapComponent = forwardRef(
         arrIcao: item.arricaoRaw, // Add arrival ICAO
       }));
     }, []);
-
-    // Fetches map data (e.g., markers) from an API endpoint
-    const getMapData = useCallback(async () => {
-      setLoading(true);
-      try {
-        const response = await axios.get(baseUrl + "flights", {
-          params: {
-            nocache: true,
-          },
-        });
-        const parsedData = processMapData(response.data); // Process the data
-        setMapData(parsedData);
-      } catch (error) {
-        console.error("Error fetching map data:", error);
-        setMapData([]);
-      } finally {
-        setLoading(false);
-      }
-    }, [processMapData]);
 
     // Generates popup content based on data properties
     const generatePopupContent = (item) => {
@@ -225,15 +206,21 @@ const MapComponent = forwardRef(
       },
     }));
 
-    // UseEffect to load map styles and data on component mount
+    useEffect(() => {
+      if (mapData) {
+        const processedData = processMapData(mapData);
+        setProcessedMapData(processedData);
+      }
+    }, [mapData, processMapData]);
+
+    // UseEffect to load map styles
     useEffect(() => {
       parseMapTiles();
-      getMapData();
-    }, [getMapData]);
+    }, []);
 
     if (loading) return <div>Loading map...</div>; // Show loading indicator
 
-    const bounds = mapData.map((marker) => [marker.lat, marker.lng]);
+    const bounds = processedMapData.map((marker) => [marker.lat, marker.lng]);
 
     return (
       <div>
@@ -245,7 +232,7 @@ const MapComponent = forwardRef(
           )}
 
           {/* Render map markers */}
-          {mapData.map((marker, index) => (
+          {processedMapData.map((marker, index) => (
             <Marker
               key={`marker-${index}`}
               position={[marker.lat, marker.lng]}

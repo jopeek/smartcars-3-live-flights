@@ -17,9 +17,7 @@ const LiveFlightTable = (props) => {
       const response = await request({
         url: baseUrl + "flights",
         method: "GET",
-        params: {
-          nocache: true,
-        },
+        params: {},
       });
 
       setFlights(response); // Update the flights state with the response data
@@ -49,7 +47,7 @@ const LiveFlightTable = (props) => {
   };
 
   const onWindowResize = () => {
-    setHeight("tblBody");
+    //setHeight("tblBody");
     setHeight("mapContainer");
   };
 
@@ -62,17 +60,21 @@ const LiveFlightTable = (props) => {
 
   useEffect(() => {
     getFlights();
+    const interval = setInterval(() => {
+      getFlights();
+    }, 60000); // Reload data every 60 seconds
+
+    return () => clearInterval(interval); // Clear interval on component unmount
   }, []);
 
   useLayoutEffect(() => {
-    setHeight("tblBody");
+    //setHeight("tblBody");
     setHeight("mapContainer");
   }, []);
 
   useEffect(() => {
     window.addEventListener("resize", onWindowResize);
     onWindowResize();
-
     return (_) => {
       window.removeEventListener("resize", onWindowResize);
     };
@@ -91,6 +93,7 @@ const LiveFlightTable = (props) => {
             zoom={13}
             style={{ height: "50vh", width: "100%" }}
             ref={mapRef}
+            mapData={flights}
           />
         </span>
       </div>
@@ -107,7 +110,7 @@ const LiveFlightTable = (props) => {
         <div className="text-left">ETA</div>
       </div>
 
-      <div id="tblBody" className="overflow-y-auto pl-8">
+      <div id="tblBody" className="pl-8">
         {flights.length > 0 ? (
           flights.map((flight) => (
             <div
@@ -141,10 +144,22 @@ const LiveFlightTable = (props) => {
               ></div>
               <div className="text-left flex items-center">{flight.phase}</div>
               <div className="text-left flex items-center">
-                {flight.distremain} <span class="fs-7 fw-lighter">nm</span>
+                {flight.distremain}{" "}
+                <span
+                  className="fs-7 fw-lighter"
+                  style={{ marginLeft: "0.2rem", marginRight: "0.2rem" }}
+                >
+                  nm
+                </span>
               </div>
               <div className="text-left flex items-center">
-                {flight.timeremain} <span class="fs-7 fw-lighter">HH:MM</span>
+                {flight.timeremain}{" "}
+                <span
+                  className="fs-7 fw-lighter"
+                  style={{ marginLeft: "0.2rem", marginRight: "0.2rem" }}
+                >
+                  HH:MM
+                </span>
               </div>
             </div>
           ))
