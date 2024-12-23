@@ -1,5 +1,11 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { MapContainer, TileLayer, Marker, Popup, Polyline } from "react-leaflet";
+import {
+  MapContainer,
+  TileLayer,
+  Marker,
+  Popup,
+  Polyline,
+} from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import axios from "axios";
 import L from "leaflet";
@@ -18,6 +24,7 @@ const MapComponent = () => {
   const [mapStyle, setMapStyle] = useState(null); // Holds map style data
   const [mapData, setMapData] = useState([]); // Holds marker data for the map
   const [loading, setLoading] = useState(false); // Tracks loading state
+  const [selectedMarker, setSelectedMarker] = useState(null); // Tracks selected marker
 
   // Initialize Leaflet extensions for marker rotation and feature groups
   useEffect(() => {
@@ -84,6 +91,8 @@ const MapComponent = () => {
       popupContent: generatePopupContent(item), // Generate popup content
       departure: [item.startLat, item.startLong], // Departure coordinates
       arrival: [item.arrLat, item.arrLong], // Arrival coordinates
+      depIcao: item.depIcao, // Add departure ICAO
+      arrIcao: item.arrIcao, // Add arrival ICAO
     }));
   }, []);
 
@@ -175,30 +184,60 @@ const MapComponent = () => {
 
         {/* Render map markers */}
         {mapData.map((marker, index) => (
-            <>
           <Marker
-            key={index}
+            key={`marker-${index}`}
             position={[marker.lat, marker.lng]}
             icon={L.divIcon({
               className: "custom-marker",
               html: `<img src='${marker.icon}' style='width: 2.5rem; filter: drop-shadow(2px 2px 2px rgba(0,0,0,0.5));'/>`,
-              iconAnchor: [5, 23],
+              iconAnchor: [16, 16], // Anchor the icon at its center
+              popupAnchor: [0, -16], // Adjust the popup anchor to point to the center of the icon
             })}
             rotationAngle={marker.rotationAngle}
+            eventHandlers={{
+              click: () => setSelectedMarker(marker),
+              popupclose: () => setSelectedMarker(null),
+            }}
           >
             <Popup>
               <div dangerouslySetInnerHTML={{ __html: marker.popupContent }} />
             </Popup>
           </Marker>
-          {/* Render dashed line between departure and arrival */}
-          {marker.departure && marker.arrival && (
+        ))}
+
+        {/* Render dashed line and extra markers for selected marker */}
+        {selectedMarker &&
+          selectedMarker.departure &&
+          selectedMarker.arrival && (
+            <>
               <Polyline
-                positions={[marker.departure, marker.arrival]}
+                positions={[selectedMarker.departure, selectedMarker.arrival]}
                 pathOptions={{ color: "#999999", dashArray: "5, 5", weight: 2 }}
               />
-            )}
-          </>
-        ))}
+              <Marker
+                position={selectedMarker.departure}
+                icon={L.divIcon({
+                  className:
+                    "leaflet-marker-icon iconicon leaflet-zoom-animated leaflet-interactive",
+                  html: `<div><div class="label_content"><span>${selectedMarker.depIcao}</span></div></div>`,
+                  iconAnchor: [20, 30],
+                })}
+              >
+                <Popup>Departure: {selectedMarker.departure.join(", ")}</Popup>
+              </Marker>
+              <Marker
+                position={selectedMarker.arrival}
+                icon={L.divIcon({
+                  className:
+                    "leaflet-marker-icon iconicon leaflet-zoom-animated leaflet-interactive",
+                  html: `<div><div class="label_content"><span>${selectedMarker.arrIcao}</span></div></div>`,
+                  iconAnchor: [20, 30],
+                })}
+              >
+                <Popup>Arrival: {selectedMarker.arrival.join(", ")}</Popup>
+              </Marker>
+            </>
+          )}
       </MapContainer>
     </div>
   );
