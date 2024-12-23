@@ -1,9 +1,6 @@
 /*  eslint-disable react-hooks/exhaustive-deps */
-import React from "react";
-import { useState } from "react";
+import React, { useState, useEffect, useLayoutEffect, useRef } from "react";
 import { request, notify } from "@tfdidesign/smartcars3-ui-sdk";
-import { useEffect } from "react";
-import { useLayoutEffect } from "react";
 import MapContainer from "../components/map";
 
 const baseUrl = "http://localhost:7172/api/com.cav.live-flights/";
@@ -11,6 +8,8 @@ const baseUrl = "http://localhost:7172/api/com.cav.live-flights/";
 const LiveFlightTable = (props) => {
   const [flightsLoading, setFlightsLoading] = useState(false);
   const [flights, setFlights] = useState([]);
+  const [selectedFlight, setSelectedFlight] = useState(null);
+  const mapRef = useRef(null);
 
   const getFlights = async () => {
     setFlightsLoading(true);
@@ -47,11 +46,18 @@ const LiveFlightTable = (props) => {
     const marginBottom = 0;
     const newHeight = (viewHeight - marginBottom) / 2;
     return newHeight;
-  }
+  };
 
   const onWindowResize = () => {
     setHeight("tblBody");
     setHeight("mapContainer");
+  };
+
+  const handleRowClick = (flight) => {
+    setSelectedFlight(flight);
+    if (mapRef.current) {
+      mapRef.current.selectMarker(flight);
+    }
   };
 
   useEffect(() => {
@@ -80,13 +86,16 @@ const LiveFlightTable = (props) => {
 
       <div id="mapContainer" className="grid-cols-12 mb-3 mx-8 map">
         <span className="color-accent-bkg col-span-12">
-          <MapContainer center={[51.505, -0.09]} zoom={13} style={{ height: "50vh", width: "100%" }} />
+          <MapContainer
+            center={[51.505, -0.09]}
+            zoom={13}
+            style={{ height: "50vh", width: "100%" }}
+            ref={mapRef}
+          />
         </span>
       </div>
 
-      <div
-        className="grid grid-cols-12 data-table-header p-3 mt-3 mx-8"
-      >
+      <div className="grid grid-cols-12 data-table-header p-3 mt-3 mx-8">
         <div className="text-left">Flight Number</div>
         <div className="text-left col-span-2">Pilot</div>
         <div className="text-left">Dep ICAO</div>
@@ -103,7 +112,8 @@ const LiveFlightTable = (props) => {
           flights.map((flight) => (
             <div
               key={flight.id}
-              className="data-table-row grid grid-cols-12 p-3 mt-1 mr-8 border-b"
+              className="data-table-row grid grid-cols-12 p-3 mt-1 mr-8 border-b liveFlightRow"
+              onClick={() => handleRowClick(flight)}
             >
               <div
                 className="text-left flex items-center"

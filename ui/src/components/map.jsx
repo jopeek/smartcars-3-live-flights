@@ -1,5 +1,11 @@
-import React, { useEffect, useState, useCallback } from "react";
-import { request, notify, applyAppColor, applyVAColor } from "@tfdidesign/smartcars3-ui-sdk";
+import React, {
+  useEffect,
+  useState,
+  useCallback,
+  useImperativeHandle,
+  forwardRef,
+  useRef
+} from "react";
 import {
   MapContainer,
   TileLayer,
@@ -31,113 +37,115 @@ const generateArcPath = (start, end) => {
   return line.geometries[0].coords.map(([lng, lat]) => [lat, lng]); // Convert to Leaflet format
 };
 
-const MapComponent = () => {
-  const [mapStyle, setMapStyle] = useState(null); // Holds map style data
-  const [mapData, setMapData] = useState([]); // Holds marker data for the map
-  const [loading, setLoading] = useState(false); // Tracks loading state
-  const [selectedMarker, setSelectedMarker] = useState(null); // Tracks selected marker
+const MapComponent = forwardRef(
+  ({ setSelectedMarker: externalSetSelectedMarker }, ref) => {
+    const [mapStyle, setMapStyle] = useState(null); // Holds map style data
+    const [mapData, setMapData] = useState([]); // Holds marker data for the map
+    const [loading, setLoading] = useState(false); // Tracks loading state
+    const [selectedMarker, setSelectedMarker] = useState(null); // Tracks selected marker
+    const markerRefs = useRef([]); // Store references to markers
 
-  // Initialize Leaflet extensions for marker rotation and feature groups
-  useEffect(() => {
-    const originalSetPos = L.Marker.prototype._setPos; // Store the original method
+    // Initialize Leaflet extensions for marker rotation and feature groups
+    useEffect(() => {
+      const originalSetPos = L.Marker.prototype._setPos; // Store the original method
 
-    L.Marker.addInitHook(function () {
-      const iconOptions = this.options.icon && this.options.icon.options;
-      const iconAnchor = iconOptions && iconOptions.iconAnchor;
-      this.options.rotationOrigin =
-        this.options.rotationOrigin ||
-        (iconAnchor
-          ? `${iconAnchor[0]}px ${iconAnchor[1]}px`
-          : "center bottom");
-      this.options.rotationAngle = this.options.rotationAngle || 0;
-    });
+      L.Marker.addInitHook(function () {
+        const iconOptions = this.options.icon && this.options.icon.options;
+        const iconAnchor = iconOptions && iconOptions.iconAnchor;
+        this.options.rotationOrigin =
+          this.options.rotationOrigin ||
+          (iconAnchor
+            ? `${iconAnchor[0]}px ${iconAnchor[1]}px`
+            : "center bottom");
+        this.options.rotationAngle = this.options.rotationAngle || 0;
+      });
 
-    L.Marker.include({
-      _setPos: function (pos) {
-        originalSetPos.call(this, pos); // Call the original method
-        if (this.options.rotationAngle) {
-          this._icon.style[
-            L.DomUtil.TRANSFORM
-          ] = `translate3d(${pos.x}px, ${pos.y}px, 0px) rotate(${this.options.rotationAngle}deg)`;
-          this._icon.style[L.DomUtil.TRANSFORM + "Origin"] =
-            this.options.rotationOrigin;
-        }
-      },
-    });
-
-    L.Map.include({
-      getFeatureGroupById: function (id) {
-        let featureGroup = null;
-        this.eachLayer((layer) => {
-          if (layer instanceof L.FeatureGroup && layer.id === id) {
-            featureGroup = layer;
+      L.Marker.include({
+        _setPos: function (pos) {
+          originalSetPos.call(this, pos); // Call the original method
+          if (this.options.rotationAngle) {
+            this._icon.style[
+              L.DomUtil.TRANSFORM
+            ] = `translate3d(${pos.x}px, ${pos.y}px, 0px) rotate(${this.options.rotationAngle}deg)`;
+            this._icon.style[L.DomUtil.TRANSFORM + "Origin"] =
+              this.options.rotationOrigin;
           }
+        },
+      });
+
+      L.Map.include({
+        getFeatureGroupById: function (id) {
+          let featureGroup = null;
+          this.eachLayer((layer) => {
+            if (layer instanceof L.FeatureGroup && layer.id === id) {
+              featureGroup = layer;
+            }
+          });
+          return featureGroup;
+        },
+      });
+    }, []);
+
+    // Fetches map tile styling from an API endpoint
+    const parseMapTiles = async () => {
+      try {
+        const response = await axios.get(baseUrl + "map_style", {
+          params: {
+            nocache: true,
+          },
         });
-        return featureGroup;
-      },
-    });
-  }, []);
+        setMapStyle(response.data); // Set map style data
+      } catch (error) {
+        console.error("Error fetching map style:", error);
+      }
+    };
 
-  // Fetches map tile styling from an API endpoint
-  const parseMapTiles = async () => {
-    try {
-      const response = await axios.get(baseUrl + "map_style", {
-        params: {
-          nocache: true,
-        },
-      });
-      setMapStyle(response.data); // Set map style data
-    } catch (error) {
-      console.error("Error fetching map style:", error);
-    }
-  };
+    // Processes raw map data into a usable format
+    const processMapData = useCallback((data) => {
+      return data.map((item) => ({
+        lat: parseFloat(item.presLat), // Convert latitude to float
+        lng: parseFloat(item.presLong), // Convert longitude to float
+        rotationAngle: item.statHdg || 0, // Include rotation angle for markers
+        icon: item.icon, // Include icon URL for markers
+        popupContent: generatePopupContent(item), // Generate popup content
+        departure: [item.startLat, item.startLong], // Departure coordinates
+        arrival: [item.arrLat, item.arrLong], // Arrival coordinates
+        depIcao: item.depicaoRaw, // Add departure ICAO
+        arrIcao: item.arricaoRaw, // Add arrival ICAO
+      }));
+    }, []);
 
-  // Processes raw map data into a usable format
-  const processMapData = useCallback((data) => {
-    return data.map((item) => ({
-      lat: parseFloat(item.presLat), // Convert latitude to float
-      lng: parseFloat(item.presLong), // Convert longitude to float
-      rotationAngle: item.statHdg || 0, // Include rotation angle for markers
-      icon: item.icon, // Include icon URL for markers
-      popupContent: generatePopupContent(item), // Generate popup content
-      departure: [item.startLat, item.startLong], // Departure coordinates
-      arrival: [item.arrLat, item.arrLong], // Arrival coordinates
-      depIcao: item.depIcao, // Add departure ICAO
-      arrIcao: item.arrIcao, // Add arrival ICAO
-    }));
-  }, []);
+    // Fetches map data (e.g., markers) from an API endpoint
+    const getMapData = useCallback(async () => {
+      setLoading(true);
+      try {
+        const response = await axios.get(baseUrl + "flights", {
+          params: {
+            nocache: true,
+          },
+        });
+        const parsedData = processMapData(response.data); // Process the data
+        setMapData(parsedData);
+      } catch (error) {
+        console.error("Error fetching map data:", error);
+        setMapData([]);
+      } finally {
+        setLoading(false);
+      }
+    }, [processMapData]);
 
-  // Fetches map data (e.g., markers) from an API endpoint
-  const getMapData = useCallback(async () => {
-    setLoading(true);
-    try {
-      const response = await axios.get(baseUrl + "map_data", {
-        params: {
-          nocache: true,
-        },
-      });
-      const parsedData = processMapData(response.data); // Process the data
-      setMapData(parsedData);
-    } catch (error) {
-      console.error("Error fetching map data:", error);
-      setMapData([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [processMapData]);
-
-  // Generates popup content based on data properties
-  const generatePopupContent = (item) => {
-    return `
+    // Generates popup content based on data properties
+    const generatePopupContent = (item) => {
+      return `
         <div class="flex items-center">
-            ${item.flightNumber}
+            ${item.flightnum}
         </div>
         <div class="flex items-center">
-            ${item.depIcaoPretty} 
+            ${item.depicao} 
             <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" role="img" width="1em" height="1em" viewBox="0 0 24 24" data-icon="mdi:arrow-right-thin" class="iconify iconify--mdi">
                 <path fill="currentColor" d="M14 16.94v-4H5.08l-.03-2.01H14V6.94l5 5Z"></path>
             </svg> 
-            ${item.arrIcaoPretty}
+            ${item.arricao}
         </div>
         <div class="flex items-center">
             ${item.pilot}
@@ -173,91 +181,136 @@ const MapComponent = () => {
         <hr>
         <div class="progress" role="progressbar" aria-valuenow="${item.perc_complete}" aria-valuemin="0" aria-valuemax="100" style="margin-bottom: initial; height: 1.5rem;"><div class="progress-bar-striped progress-bar text-bg-warning" style="margin-bottom: inherit; width: ${item.perc_complete}%">${item.perc_complete}%</div></div>
     `;
-  };
+    };
 
-  // UseEffect to load map styles and data on component mount
-  useEffect(() => {
-    parseMapTiles();
-    getMapData();
-  }, [getMapData]);
+    const handleMarkerClick = (item) => {
+      setSelectedMarker(item);
+      if (externalSetSelectedMarker) {
+        externalSetSelectedMarker(item);
+      }
+    };
 
-  if (loading) return <div>Loading map...</div>; // Show loading indicator
+    useImperativeHandle(ref, () => ({
+      selectMarker: (item) => {
+        handleMarkerClick({
+          lat: parseFloat(item.presLat), // Convert latitude to float
+          lng: parseFloat(item.presLong), // Convert longitude to float
+          rotationAngle: item.statHdg || 0, // Include rotation angle for markers
+          icon: item.icon, // Include icon URL for markers
+          popupContent: generatePopupContent(item), // Generate popup content
+          departure: [item.startLat, item.startLong], // Departure coordinates
+          arrival: [item.arrLat, item.arrLong], // Arrival coordinates
+          depIcao: item.depicaoRaw, // Add departure ICAO
+          arrIcao: item.arricaoRaw, // Add arrival ICAO
+        });
+        const marker = markerRefs.current.find(
+          (ref) =>
+            ref._latlng.lat === parseFloat(item.presLat) &&
+            ref._latlng.lng === parseFloat(item.presLong)
+        );
+        if (marker) {
+          marker.openPopup();
+        }
+      },
+    }));
 
-  return (
-    <div>
-      <MapContainer
-        center={[0, 0]}
-        zoom={2}
-        style={{ height: "50vh", width: "100%" }}
-      >
-        {/* Render map tiles */}
-        {mapStyle && (
-          <TileLayer url={mapStyle.url} attribution={mapStyle.attribution} />
-        )}
+    // UseEffect to load map styles and data on component mount
+    useEffect(() => {
+      parseMapTiles();
+      getMapData();
+    }, [getMapData]);
 
-        {/* Render map markers */}
-        {mapData.map((marker, index) => (
-          <Marker
-            key={`marker-${index}`}
-            position={[marker.lat, marker.lng]}
-            icon={L.divIcon({
-              className: "custom-marker",
-              html: `<img src='${marker.icon}' style='width: 2.5rem; filter: drop-shadow(2px 2px 2px rgba(0,0,0,0.5));'/>`,
-              iconAnchor: [16, 16], // Anchor the icon at its center
-              popupAnchor: [0, -16], // Adjust the popup anchor to point to the center of the icon
-            })}
-            rotationAngle={marker.rotationAngle}
-            eventHandlers={{
-              click: () => setSelectedMarker(marker),
-              popupclose: () => setSelectedMarker(null),
-            }}
-          >
-            <Popup>
-              <div dangerouslySetInnerHTML={{ __html: marker.popupContent }} />
-            </Popup>
-          </Marker>
-        ))}
+    if (loading) return <div>Loading map...</div>; // Show loading indicator
 
-        {/* Render dashed line and extra markers for selected marker */}
-        {selectedMarker &&
-          selectedMarker.departure &&
-          selectedMarker.arrival && (
-            <>
-              {/* Generate curved path */}
-              <Polyline
-                positions={generateArcPath(
-                  selectedMarker.departure,
-                  selectedMarker.arrival
-                )}
-                pathOptions={{ color: "#999999", dashArray: "5, 5", weight: 2 }}
-              />
-              <Marker
-                position={selectedMarker.departure}
-                icon={L.divIcon({
-                  className:
-                    "leaflet-marker-icon iconicon leaflet-zoom-animated leaflet-interactive",
-                  html: `<div><div class="label_content"><span>${selectedMarker.depIcao}</span></div></div>`,
-                  iconAnchor: [20, 30],
-                })}
-              >
-                <Popup>Departure: {selectedMarker.departure.join(", ")}</Popup>
-              </Marker>
-              <Marker
-                position={selectedMarker.arrival}
-                icon={L.divIcon({
-                  className:
-                    "leaflet-marker-icon iconicon leaflet-zoom-animated leaflet-interactive",
-                  html: `<div><div class="label_content"><span>${selectedMarker.arrIcao}</span></div></div>`,
-                  iconAnchor: [20, 30],
-                })}
-              >
-                <Popup>Arrival: {selectedMarker.arrival.join(", ")}</Popup>
-              </Marker>
-            </>
+    return (
+      <div>
+        <MapContainer
+          center={[0, 0]}
+          zoom={2}
+          style={{ height: "50vh", width: "100%" }}
+        >
+          {/* Render map tiles */}
+          {mapStyle && (
+            <TileLayer url={mapStyle.url} attribution={mapStyle.attribution} />
           )}
-      </MapContainer>
-    </div>
-  );
-};
+
+          {/* Render map markers */}
+          {mapData.map((marker, index) => (
+            <Marker
+              key={`marker-${index}`}
+              position={[marker.lat, marker.lng]}
+              icon={L.divIcon({
+                className: "custom-marker",
+                html: `<img src='${marker.icon}' style='width: 2.5rem; filter: drop-shadow(2px 2px 2px rgba(0,0,0,0.5));'/>`,
+                iconAnchor: [16, 16], // Anchor the icon at its center
+                popupAnchor: [0, -16], // Adjust the popup anchor to point to the center of the icon
+              })}
+              rotationAngle={marker.rotationAngle}
+              eventHandlers={{
+                click: () => handleMarkerClick(marker),
+                popupclose: () => setSelectedMarker(null),
+              }}
+              ref={(el) => {
+                if (el) {
+                  markerRefs.current[index] = el;
+                }
+              }}
+            >
+              <Popup>
+                <div
+                  dangerouslySetInnerHTML={{ __html: marker.popupContent }}
+                />
+              </Popup>
+            </Marker>
+          ))}
+
+          {/* Render dashed line and extra markers for selected marker */}
+          {selectedMarker &&
+            selectedMarker.departure &&
+            selectedMarker.arrival && (
+              <>
+                {/* Generate curved path */}
+                <Polyline
+                  positions={generateArcPath(
+                    selectedMarker.departure,
+                    selectedMarker.arrival
+                  )}
+                  pathOptions={{
+                    color: "#999999",
+                    dashArray: "5, 5",
+                    weight: 2,
+                  }}
+                />
+                <Marker
+                  position={selectedMarker.departure}
+                  icon={L.divIcon({
+                    className:
+                      "leaflet-marker-icon iconicon leaflet-zoom-animated leaflet-interactive",
+                    html: `<div><div class="label_content"><span>${selectedMarker.depIcao}</span></div></div>`,
+                    iconAnchor: [20, 30],
+                  })}
+                >
+                  <Popup>
+                    Departure: {selectedMarker.departure.join(", ")}
+                  </Popup>
+                </Marker>
+                <Marker
+                  position={selectedMarker.arrival}
+                  icon={L.divIcon({
+                    className:
+                      "leaflet-marker-icon iconicon leaflet-zoom-animated leaflet-interactive",
+                    html: `<div><div class="label_content"><span>${selectedMarker.arrIcao}</span></div></div>`,
+                    iconAnchor: [20, 30],
+                  })}
+                >
+                  <Popup>Arrival: {selectedMarker.arrival.join(", ")}</Popup>
+                </Marker>
+              </>
+            )}
+        </MapContainer>
+      </div>
+    );
+  }
+);
 
 export default MapComponent;
