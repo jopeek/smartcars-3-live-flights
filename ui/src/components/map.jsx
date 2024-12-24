@@ -55,7 +55,10 @@ const MapComponent = forwardRef(
     const [pathData, setPathData] = useState(null); // Holds map style data
     const [loading, setLoading] = useState(false); // Tracks loading state
     const [selectedMarker, setSelectedMarker] = useState(null); // Tracks selected marker
+    const [isMarkerSelected, setIsMarkerSelected] = useState(false); // Add state to track if a marker is selected
     const markerRefs = useRef([]); // Store references to markers
+    const [isPolylineVisible, setIsPolylineVisible] = useState(true);
+    const mapRef = useRef(null); // Add a reference to the map instance
 
     // Initialize Leaflet extensions for marker rotation and feature groups
     useEffect(() => {
@@ -154,10 +157,10 @@ const MapComponent = forwardRef(
             ${item.pilot}
         </div>
         <div class="flex items-center">
-            ${item.depicao} 
+            ${item.depicao}
             <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" role="img" width="1em" height="1em" viewBox="0 0 24 24" data-icon="mdi:arrow-right-thin" class="iconify iconify--mdi">
                 <path fill="currentColor" d="M14 16.94v-4H5.08l-.03-2.01H14V6.94l5 5Z"></path>
-            </svg> 
+            </svg>
             ${item.arricao}
         </div>
         <div class="flex items-center">
@@ -195,36 +198,10 @@ const MapComponent = forwardRef(
 
     const handleMarkerClick = (item) => {
       setSelectedMarker(item);
-      if (externalSetSelectedMarker) {
-        externalSetSelectedMarker(item);
-      }
+      setIsMarkerSelected(true); // Set marker selected state to true
+      setIsPolylineVisible(true); // Show the polyline when the marker is clicked
       getPathData(item.actmpId); // Call getPathData with the pilotId
     };
-
-    useImperativeHandle(ref, () => ({
-      selectMarker: (item) => {
-        handleMarkerClick({
-          lat: parseFloat(item.presLat), // Convert latitude to float
-          lng: parseFloat(item.presLong), // Convert longitude to float
-          rotationAngle: item.statHdg || 0, // Include rotation angle for markers
-          icon: item.icon, // Include icon URL for markers
-          popupContent: generatePopupContent(item), // Generate popup content
-          departure: [item.startLat, item.startLong], // Departure coordinates
-          arrival: [item.arrLat, item.arrLong], // Arrival coordinates
-          depIcao: item.depicaoRaw, // Add departure ICAO
-          arrIcao: item.arricaoRaw, // Add arrival ICAO
-          actmpId: item.actmpId,
-        });
-        const marker = markerRefs.current.find(
-          (ref) =>
-            ref._latlng.lat === parseFloat(item.presLat) &&
-            ref._latlng.lng === parseFloat(item.presLong)
-        );
-        if (marker) {
-          marker.openPopup();
-        }
-      },
-    }));
 
     useEffect(() => {
       if (mapData) {
@@ -238,14 +215,70 @@ const MapComponent = forwardRef(
       parseMapTiles();
     }, []);
 
+    // Function to zoom in on the selected marker
+    const zoomToMarker = (markerData) => {
+      if (mapRef.current) {
+        console.log(
+          "zoomToMarker",
+          mapRef.current,
+          markerData.lat,
+          markerData.lng
+        );
+        mapRef.current.setView([markerData.lat, markerData.lng], 6); // Adjust the zoom level as needed
+      } else {
+        console.log("Map instance is not ready yet.");
+      }
+    };
+
+    // Function to close the popup of the currently selected marker
+    const closeSelectedMarkerPopup = () => {
+      if (selectedMarker) {
+        const marker = markerRefs.current.find(
+          (ref) =>
+            ref._latlng.lat === selectedMarker.lat &&
+            ref._latlng.lng === selectedMarker.lng
+        );
+        if (marker) {
+          marker.closePopup();
+        }
+      }
+    };
+
+    useImperativeHandle(ref, () => ({
+      selectMarker: (item) => {
+        closeSelectedMarkerPopup(); // Close the popup of the currently selected marker
+        const markerData = {
+          lat: parseFloat(item.presLat), // Convert latitude to float
+          lng: parseFloat(item.presLong), // Convert longitude to float
+          rotationAngle: item.statHdg || 0, // Include rotation angle for markers
+          icon: item.icon, // Include icon URL for markers
+          //popupContent: generatePopupContent(item), // Generate popup content
+          departure: [item.startLat, item.startLong], // Departure coordinates
+          arrival: [item.arrLat, item.arrLong], // Arrival coordinates
+          depIcao: item.depicaoRaw, // Add departure ICAO
+          arrIcao: item.arricaoRaw, // Add arrival ICAO
+          actmpId: item.actmpId,
+        };
+        setSelectedMarker(markerData);
+        setIsMarkerSelected(true); // Set marker selected state to true
+        handleMarkerClick(markerData);
+        zoomToMarker(markerData); // Zoom in on the selected marker
+      },
+    }));
+
     if (loading) return <div>Loading map...</div>; // Show loading indicator
 
     const bounds = processedMapData.map((marker) => [marker.lat, marker.lng]);
 
     return (
       <div>
-        <MapContainer style={{ height: "50vh", width: "100%" }}>
-          <FitBounds bounds={bounds} />
+        <MapContainer
+          style={{ height: "50vh", width: "100%" }}
+          whenReady={(mapInstance) => {
+            mapRef.current = mapInstance.target;
+          }}
+        >
+          {!isMarkerSelected && <FitBounds bounds={bounds} />} {/* Conditionally render FitBounds */}
           {/* Render map tiles */}
           {mapStyle && (
             <TileLayer url={mapStyle.url} attribution={mapStyle.attribution} />
@@ -258,14 +291,17 @@ const MapComponent = forwardRef(
               position={[marker.lat, marker.lng]}
               icon={L.divIcon({
                 className: "custom-marker",
-                html: `<img src='${marker.icon}' style='width: 2.5rem; filter: drop-shadow(2px 2px 2px rgba(0,0,0,0.5));'/>`,
+                html: `<img src='${marker.icon}' style='width: 2.5rem; transform: rotateZ(${marker.rotationAngle}deg); filter: drop-shadow(2px 2px 2px rgba(0,0,0,0.5));'/>`,
                 iconAnchor: [16, 16], // Anchor the icon at its center
                 popupAnchor: [0, -16], // Adjust the popup anchor to point to the center of the icon
               })}
-              rotationAngle={marker.rotationAngle}
+              //rotationAngle={marker.rotationAngle}
               eventHandlers={{
                 click: () => handleMarkerClick(marker),
-                popupclose: () => setSelectedMarker(null),
+                popupclose: () => {
+                  setSelectedMarker(null);
+                  setIsPolylineVisible(false); // Hide the polyline when the popup closes
+                },
               }}
               ref={(el) => {
                 if (el) {
@@ -273,11 +309,13 @@ const MapComponent = forwardRef(
                 }
               }}
             >
-              <Popup>
-                <div
-                  dangerouslySetInnerHTML={{ __html: marker.popupContent }}
-                />
-              </Popup>
+              {marker.popupContent && (
+                <Popup>
+                  <div
+                    dangerouslySetInnerHTML={{ __html: marker.popupContent }}
+                  />
+                </Popup>
+              )}
             </Marker>
           ))}
 
@@ -325,7 +363,7 @@ const MapComponent = forwardRef(
               </>
             )}
 
-          {pathData && pathData.length > 0 && (
+          {isPolylineVisible && pathData && pathData.length > 0 && (
             <Polyline positions={pathData} color="#c50202" />
           )}
         </MapContainer>
