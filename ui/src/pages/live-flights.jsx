@@ -1,6 +1,8 @@
 /*  eslint-disable react-hooks/exhaustive-deps */
 import React, { useState, useEffect, useLayoutEffect, useRef } from "react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { request, notify } from "@tfdidesign/smartcars3-ui-sdk";
+import { faRefresh } from "@fortawesome/free-solid-svg-icons";
 import MapContainer from "../components/map";
 
 const baseUrl = "http://localhost:7172/api/com.cav.live-flights/";
@@ -83,8 +85,27 @@ const LiveFlightTable = (props) => {
 
   return (
     <div className="root-container">
-      <div className="grid grid-cols-12 mb-3 mx-8">
-        <h2 className="color-accent-bkg col-span-12">Live Flights</h2>
+      <div className="mb-3 mx-8">
+        <div className="flex flex-row justify-between w-full">
+          <div>
+            <h2 className="color-accent-bkg col-span-12">Live Flights</h2>
+          </div>
+          <div>
+            <div
+              onClick={() => !flightsLoading && !props.loading && getFlights()}
+              className="button button-hollow"
+              style={{ marginLeft: "auto" }}
+            >
+              <span
+                className={
+                  flightsLoading || props.loading ? "animate-spin" : ""
+                }
+              >
+                <FontAwesomeIcon icon={faRefresh} />
+              </span>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div id="mapContainer" className="grid-cols-12 mb-3 mx-8 map">
