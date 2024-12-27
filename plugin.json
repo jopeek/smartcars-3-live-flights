@@ -1,7 +1,7 @@
 {
   "id": "com.cav.live-flights",
   "name": "CAV Live Flights",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "type": "airline",
   "allowedCommunities": [402],
   "description": "A customized live flight map for Canada Air Virtual",

@@ -108,17 +108,19 @@ const LiveFlightTable = (props) => {
         </div>
       </div>
 
-      <div id="mapContainer" className="grid-cols-12 mb-3 mx-8 map">
-        <span className="color-accent-bkg col-span-12">
-          <MapContainer
-            center={[51.505, -0.09]}
-            zoom={13}
-            style={{ height: "50vh", width: "100%" }}
-            ref={mapRef}
-            mapData={flights}
-          />
-        </span>
-      </div>
+      {flights && flights.length > 0 && (
+        <div id="mapContainer" className="grid-cols-12 mb-3 mx-8 map">
+          <span className="color-accent-bkg col-span-12">
+            <MapContainer
+              center={[51.505, -0.09]}
+              zoom={13}
+              style={{ height: "50vh", width: "100%" }}
+              ref={mapRef}
+              mapData={flights}
+            />
+          </span>
+        </div>
+      )}
 
       <div className="grid grid-cols-12 data-table-header p-3 mt-3 mx-8">
         <div className="text-left">Flight Number</div>
