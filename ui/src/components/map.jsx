@@ -270,6 +270,18 @@ const MapComponent = forwardRef(
 
     const bounds = processedMapData.map((marker) => [marker.lat, marker.lng]);
 
+    const FitBoundsWithMaxZoom = ({ bounds, maxZoom }) => {
+      const map = useMap();
+    
+      useEffect(() => {
+        if (bounds && bounds.length > 0) {
+          map.fitBounds(bounds, { maxZoom });
+        }
+      }, [bounds, maxZoom, map]);
+    
+      return null;
+    };
+
     return (
       <div>
         <MapContainer
@@ -278,7 +290,7 @@ const MapComponent = forwardRef(
             mapRef.current = mapInstance.target;
           }}
         >
-          {!isMarkerSelected && <FitBounds bounds={bounds} />} {/* Conditionally render FitBounds */}
+          {!isMarkerSelected && <FitBoundsWithMaxZoom bounds={bounds} maxZoom={5} />} {/* Conditionally render FitBounds */}
           {/* Render map tiles */}
           {mapStyle && (
             <TileLayer url={mapStyle.url} attribution={mapStyle.attribution} />
