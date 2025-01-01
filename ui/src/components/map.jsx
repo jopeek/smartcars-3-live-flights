@@ -376,7 +376,7 @@ const MapComponent = forwardRef(
             )}
 
           {isPolylineVisible && pathData && pathData.length > 0 && (
-            <Polyline positions={pathData} color="#c50202" />
+            <Polyline positions={pathData} color="#c50202" smoothFactor={1.5} />
           )}
         </MapContainer>
       </div>
