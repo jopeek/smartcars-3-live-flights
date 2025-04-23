@@ -134,14 +134,25 @@ const LiveFlightTable = (props) => {
             <div className="chat-messages">
               {chatMessages.length > 0 ? (
                 chatMessages.map((messageObj, index) => (
-                  <div key={messageObj.messageId || index} className="chat-message">
+                  <div
+                    key={messageObj.messageId || index}
+                    className={`chat-message ${
+                      props.identity &&
+                      props.identity.va_user &&
+                      messageObj.pilotId === props.identity.va_user.dbID
+                        ? "own-message"
+                        : "other-message"
+                    }`}
+                  >
                     <span
                       dangerouslySetInnerHTML={{
                         __html: messageObj.pilot || "Unknown Pilot",
                       }}
                     ></span>
                     : {messageObj.message}
-                    <div className="timestamp">{new Date(messageObj.timestamp).toLocaleString()}</div>
+                    <div className="timestamp">
+                      {new Date(messageObj.timestamp).toLocaleString()}
+                    </div>
                   </div>
                 ))
               ) : (
@@ -279,7 +290,7 @@ const LiveFlightTable = (props) => {
 const LiveFlights = ({ identity }) => {
   const [isLoading] = useState(false);
 
-  return <LiveFlightTable loading={isLoading} />;
+  return <LiveFlightTable loading={isLoading} identity={identity} />;
 };
 
 export default LiveFlights;
