@@ -85,6 +85,28 @@ module.exports = {
           }
         },
       },
+      chatMessages: {
+        description: "Endpoint to retrieve chat messages",
+        handler: async (req, res) => {
+          try {
+            let params = {};
+
+            const response = await axios({
+              url: `${scIdentity.airline.settings.scriptURL}flights/chatMessages`,
+              method: "GET",
+              params: params,
+              headers: {
+                Authorization: `Bearer ${scIdentity.va_user.session}`,
+              },
+            });
+
+            return res.json(response.data);
+          } catch (error) {
+            log("Error while retrieving chat messages", "error", error);
+            return res.status(500).json({});
+          }
+        },
+      },
     },
   },
   post: {},
