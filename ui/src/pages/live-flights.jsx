@@ -14,6 +14,8 @@ const LiveFlightTable = (props) => {
   const [isSidebarExpanded, setIsSidebarExpanded] = useState(false); // Sidebar state
   const [chatMessages, setChatMessages] = useState([]); // Chat messages
   const [newMessage, setNewMessage] = useState(""); // New message input
+  const [lastMessageCount, setLastMessageCount] = useState(0); // Track the last number of messages
+  const [hasNewMessages, setHasNewMessages] = useState(false); // Track if there are new messages
   const mapRef = useRef(null);
 
   const getFlights = async () => {
@@ -89,6 +91,15 @@ const LiveFlightTable = (props) => {
     }
   };
 
+  const updateMessageCount = () => {
+    if (isSidebarExpanded) {
+      setLastMessageCount(chatMessages.length); // Update the last message count when the sidebar is expanded
+      setHasNewMessages(false); // Reset the highlight
+    } else if (chatMessages.length > lastMessageCount) {
+      setHasNewMessages(true); // Highlight the toggle button if there are new messages
+    }
+  };
+
   useEffect(() => {
     getFlights();
     getChatMessages(); // Fetch chat messages on component mount
@@ -113,6 +124,10 @@ const LiveFlightTable = (props) => {
     };
   });
 
+  useEffect(() => {
+    updateMessageCount(); // Check for new messages whenever chatMessages or sidebar state changes
+  }, [chatMessages, isSidebarExpanded]);
+
   return (
     <div className="root-container flex">
       {/* Sidebar */}
@@ -122,10 +137,14 @@ const LiveFlightTable = (props) => {
         }`}
       >
         <div
-          className="toggle-button"
+          className={`toggle-button ${hasNewMessages ? "highlight" : ""}`} // Add highlight class if there are new messages
           onClick={() => setIsSidebarExpanded(!isSidebarExpanded)}
           title="Toggle Chat Messages" // Tooltip added
-          style={{ display: "flex", alignItems: "center", justifyContent: "center" }} // Center alignment
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center"
+          }}
         >
           <FontAwesomeIcon icon={isSidebarExpanded ? faChevronLeft : faChevronRight} />
         </div>
