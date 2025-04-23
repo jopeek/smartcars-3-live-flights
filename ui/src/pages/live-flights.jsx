@@ -91,10 +91,19 @@ const LiveFlightTable = (props) => {
     }
   };
 
+  useEffect(() => {
+    // Load lastMessageCount from localStorage on component mount
+    const storedMessageCount = localStorage.getItem("lastMessageCount");
+    if (storedMessageCount) {
+      setLastMessageCount(parseInt(storedMessageCount, 10));
+    }
+  }, []);
+
   const updateMessageCount = () => {
     if (isSidebarExpanded) {
       setLastMessageCount(chatMessages.length); // Update the last message count when the sidebar is expanded
       setHasNewMessages(false); // Reset the highlight
+      localStorage.setItem("lastMessageCount", chatMessages.length); // Persist to localStorage
     } else if (chatMessages.length > lastMessageCount) {
       setHasNewMessages(true); // Highlight the toggle button if there are new messages
     }
