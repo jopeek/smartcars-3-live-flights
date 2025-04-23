@@ -149,7 +149,7 @@ const LiveFlightTable = (props) => {
                         __html: messageObj.pilot || "Unknown Pilot",
                       }}
                     ></span>
-                    : {messageObj.message}
+                    {messageObj.message}
                     <div className="timestamp">
                       {new Date(messageObj.timestamp).toLocaleString()}
                     </div>
