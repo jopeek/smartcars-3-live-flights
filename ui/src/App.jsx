@@ -39,7 +39,7 @@ function MainApp() {
         path="/"
         element={
           <LiveFlights
-            identity={identity}
+            identity={identity} // Pass identity explicitly
           />
         }
       />

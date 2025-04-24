@@ -27,6 +27,8 @@
                 let foreColor = "#ffffff";
                 let foreAccentColor = "#a0a0a0";
                 let intBackColor = "#444444";
+                let sidebarColor = "#242424";
+                let sidebarAccentColor = "#565656";
 
                 if (darkMode === false) {
                     backColor = "#ffffff";
@@ -34,7 +36,19 @@
                     foreColor = "#565656";
                     foreAccentColor = "#8b8b8b";
                     intBackColor = "#cbcbcb";
+                    sidebarColor = "#f4f4f4";
+                    sidebarAccentColor = "#e6e9ec";
                 }
+
+                document.documentElement.style.setProperty(
+                    "--sidebar-color",
+                    sidebarColor,
+                );
+
+                document.documentElement.style.setProperty(
+                    "--sidebar-accent-color",
+                    sidebarAccentColor,
+                );
 
                 document.documentElement.style.setProperty(
                     "--background-color",
