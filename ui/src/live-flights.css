@@ -304,9 +304,9 @@ img.profileImage {
   text-align: right;
 }
 
-.highlighted-message {
-  background-color: #198754 !important; /* Light yellow background */
-  border: 1px solid #ffeeba; /* Border to match the highlight */
+.chat-message.highlighted-message {
+  background-color: #198754 !important;
+  color: #fff !important;
   padding: 10px;
   border-radius: 15px;
 }

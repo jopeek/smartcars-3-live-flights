@@ -22,6 +22,7 @@ const LiveFlightTable = (props) => {
   const mapRef = useRef(null);
   const chatMessagesRef = useRef(null); // Reference for chat messages container
   const inputRef = useRef(null); // Reference for the input box
+  const dropdownRef = useRef(null); // Reference for the dropdown container
 
   const getFlights = async () => {
     setFlightsLoading(true);
@@ -115,11 +116,20 @@ const LiveFlightTable = (props) => {
   const handleInputChange = (value) => {
     setNewMessage(value);
 
-    // Show the dropdown only if "@" is present and no selection was just made
-    if (value.includes("@")) {
+    // Show the dropdown only if "@" is the last character
+    if (value.endsWith("@")) {
       setAutocompleteVisible(true);
+
+      // Manually focus the dropdown
+      setTimeout(() => {
+        const dropdown = document.querySelector('[role="listbox"]'); // Query the dropdown by its role
+        if (dropdown) {
+          //dropdown.setAttribute("tabindex", "-1"); // Make it focusable
+          dropdown.focus();
+        }
+      }, 0);
     } else {
-      setAutocompleteVisible(false); // Close the dropdown if "@" disappears
+      setAutocompleteVisible(false); // Close the dropdown if "@" is not the last character
     }
   };
 
@@ -193,6 +203,23 @@ const LiveFlightTable = (props) => {
       scrollToBottom(); // Scroll to the bottom when the sidebar is expanded
     }
   }, [isSidebarExpanded]);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target) &&
+        inputRef.current !== event.target
+      ) {
+        setAutocompleteVisible(false); // Close the dropdown if clicking outside
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   const highlightPilotName = (message, pilotName) => {
     const regex = new RegExp(`(${pilotName})`, "gi");
@@ -276,7 +303,10 @@ const LiveFlightTable = (props) => {
                 style={{ flexGrow: 1, padding: "5px", marginRight: "10px" }}
               />
               {autocompleteVisible && (
-                <div style={{ position: "absolute", bottom: "100%", left: 0, zIndex: 1000, width: "100%" }}>
+                <div
+                  ref={dropdownRef}
+                  style={{ position: "absolute", bottom: "100%", left: 0, zIndex: 1000, width: "100%" }}
+                >
                   <Select
                     options={autocompleteOptions.map((option) => ({ value: option, label: option }))}
                     onChange={handleAutocompleteSelect}
