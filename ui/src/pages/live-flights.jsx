@@ -276,7 +276,7 @@ const LiveFlightTable = (props) => {
                   const isHighlighted =
                     props.identity?.va_user?.pilotRaw &&
                     messageObj.message.includes(props.identity.va_user.pilotRaw);
-              
+                  
                   return (
                     <div
                       key={messageObj.messageId || index}
@@ -338,6 +338,7 @@ const LiveFlightTable = (props) => {
                     autoFocus={true} // Automatically focus the dropdown
                     onMenuClose={() => setAutocompleteVisible(false)} // Ensure dropdown closes properly
                     menuPlacement="top" // Make the dropdown drop "up"
+                    className="pilot-autocomplete"
                     styles={{
                       menu: (provided) => ({ ...provided, zIndex: 1000 }),
                       control: (provided) => ({ ...provided, display: "none" }), // Hide the default input box of react-select
@@ -417,7 +418,7 @@ const LiveFlightTable = (props) => {
                 onClick={() => handleRowClick(flight)}
               >
                 <div
-                  className="text-left flex items-center"
+                  className="text-left flex items-center" style={{ wordBreak: "break-all" }}
                   dangerouslySetInnerHTML={{ __html: flight.flightnum }}
                 ></div>
                 <div
@@ -425,11 +426,11 @@ const LiveFlightTable = (props) => {
                   dangerouslySetInnerHTML={{ __html: flight.pilot }}
                 ></div>
                 <div
-                  className="text-left flex items-center"
+                  className="text-left flex items-center" style={{ wordBreak: "break-all" }}
                   dangerouslySetInnerHTML={{ __html: flight.depicao }}
                 ></div>
                 <div
-                  className="text-left flex items-center"
+                  className="text-left flex items-center" style={{ wordBreak: "break-all" }}
                   dangerouslySetInnerHTML={{ __html: flight.arricao }}
                 ></div>
                 <div
@@ -450,7 +451,7 @@ const LiveFlightTable = (props) => {
                     nm
                   </span>
                 </div>
-                <div className="text-left flex items-center">
+                <div className="text-left flex items-center" style={{ wordBreak: "break-all" }}>
                   {flight.timeremain}{" "}
                   <span
                     className="fs-7 fw-lighter"

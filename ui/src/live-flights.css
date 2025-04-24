@@ -209,13 +209,13 @@ img.profileImage {
 
 /* Sidebar styles */
 .sidebar {
-  position: fixed;
+  position: relative; /* Change from fixed to relative */
   top: 0;
   left: 0;
   height: 100vh;
   background-color: var(--sidebar-color);
   border-right: 1px solid #ddd;
-  transition: width 0.3s ease;
+  transition: width 0.3s ease, margin-left 0.3s ease; /* Add margin-left transition */
   z-index: 3000;
 }
 
@@ -224,7 +224,7 @@ img.profileImage {
 }
 
 .sidebar.expanded {
-  width: 25%;
+  width: 400px;
 }
 
 .sidebar .toggle-button {
@@ -342,7 +342,8 @@ img.profileImage {
 }
 
 .main-content {
-  margin-left: 50px; /* Adjust this value based on the sidebar width */
+  
+  transition: margin-left 0.3s ease; /* Smooth transition for content shift */
 }
 
 .highlight {
@@ -367,4 +368,31 @@ img.profileImage {
   text-decoration: none;
   user-select: none;
   transition: background-color 0.15s ease-in-out, border-color 0.15s ease-in-out;
+}
+
+.root-container {
+  display: flex; /* Ensure the sidebar and main content are side by side */
+  height: 100vh; /* Make the root container take the full viewport height */
+  overflow: hidden; /* Prevent the full page from scrolling */
+}
+
+.sidebar {
+  flex-shrink: 0; /* Prevent the sidebar from shrinking */
+  width: 50px; /* Default width when collapsed */
+  transition: width 0.3s ease; /* Smooth transition for width changes */
+}
+
+.sidebar.expanded {
+  width: 350px; /* Fixed width when expanded */
+}
+
+.main-content {
+  flex-grow: 1; /* Allow the main content to take up remaining space */
+  overflow-y: auto; /* Enable vertical scrolling for the main content */
+  height: 100%; /* Ensure the main content takes the full height of the container */
+  transition: margin-left 0.3s ease; /* Smooth transition for content shift */
+}
+
+.pilot-autocomplete {
+  color: black !important;
 }
