@@ -226,6 +226,18 @@ const LiveFlightTable = (props) => {
     return message.replace(regex, '<span class="highlight">$1</span>');
   };
 
+  const toggleSidebar = () => {
+    setIsSidebarExpanded((prev) => {
+      const newState = !prev;
+      if (newState) {
+        setTimeout(() => {
+          inputRef.current?.focus(); // Focus the chat textbox when the sidebar is opened
+        }, 0);
+      }
+      return newState;
+    });
+  };
+
   return (
     <div className="root-container flex">
       {/* Sidebar */}
@@ -236,12 +248,12 @@ const LiveFlightTable = (props) => {
       >
         <div
           className={`toggle-button ${hasNewMessages ? "highlight" : ""}`} // Add highlight class if there are new messages
-          onClick={() => setIsSidebarExpanded(!isSidebarExpanded)}
+          onClick={toggleSidebar} // Use the new toggleSidebar function
           title="Toggle Chat Messages" // Tooltip added
           style={{
             display: "flex",
             alignItems: "center",
-            justifyContent: "center"
+            justifyContent: "center",
           }}
         >
           <FontAwesomeIcon icon={isSidebarExpanded ? faChevronLeft : faChevronRight} />
