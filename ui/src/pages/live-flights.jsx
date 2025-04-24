@@ -219,7 +219,7 @@ const LiveFlightTable = (props) => {
         </div>
         {isSidebarExpanded && (
           <div className="sidebar-content">
-            <div className="chat-messages" ref={chatMessagesRef}>
+            <div className="chat-messages hide-scrollbar" ref={chatMessagesRef}>
               {chatMessages.length > 0 ? (
                 chatMessages.map((messageObj, index) => {
                   const isHighlighted =
