@@ -115,9 +115,11 @@ const LiveFlightTable = (props) => {
   const handleInputChange = (value) => {
     setNewMessage(value);
 
-    // Show the dropdown only if "@" is typed and no selection was just made
-    if (value.includes("@") && !autocompleteVisible) {
+    // Show the dropdown only if "@" is present and no selection was just made
+    if (value.includes("@")) {
       setAutocompleteVisible(true);
+    } else {
+      setAutocompleteVisible(false); // Close the dropdown if "@" disappears
     }
   };
 
