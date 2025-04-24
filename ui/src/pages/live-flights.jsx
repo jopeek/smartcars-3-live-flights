@@ -4,6 +4,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { request, notify } from "@tfdidesign/smartcars3-ui-sdk";
 import { faRefresh, faChevronLeft, faChevronRight } from "@fortawesome/free-solid-svg-icons";
 import MapContainer from "../components/map";
+import Select from "react-select"; // Import react-select
 
 const baseUrl = "http://localhost:7172/api/com.cav.live-flights/";
 
@@ -16,7 +17,11 @@ const LiveFlightTable = (props) => {
   const [newMessage, setNewMessage] = useState(""); // New message input
   const [lastMessageCount, setLastMessageCount] = useState(0); // Track the last number of messages
   const [hasNewMessages, setHasNewMessages] = useState(false); // Track if there are new messages
+  const [autocompleteOptions, setAutocompleteOptions] = useState([]); // Options for autocomplete
+  const [autocompleteVisible, setAutocompleteVisible] = useState(false); // Autocomplete visibility
   const mapRef = useRef(null);
+  const chatMessagesRef = useRef(null); // Reference for chat messages container
+  const inputRef = useRef(null); // Reference for the input box
 
   const getFlights = async () => {
     setFlightsLoading(true);
@@ -28,6 +33,9 @@ const LiveFlightTable = (props) => {
       });
 
       setFlights(response); // Update the flights state with the response data
+      setAutocompleteOptions(
+        response.map((flight) => flight.pilotnameRaw).sort((a, b) => a.localeCompare(b))
+      ); // Extract and sort pilot names alphabetically
     } catch (error) {
       console.error("Error fetching flights:", error);
       setFlights([]); // Set flights to an empty array in case of an error
@@ -104,6 +112,24 @@ const LiveFlightTable = (props) => {
     }
   };
 
+  const handleInputChange = (value) => {
+    setNewMessage(value);
+
+    // Show the dropdown only if "@" is typed and no selection was just made
+    if (value.includes("@") && !autocompleteVisible) {
+      setAutocompleteVisible(true);
+    }
+  };
+
+  const handleAutocompleteSelect = (selectedOption) => {
+    const atIndex = newMessage.lastIndexOf("@");
+    const updatedMessage =
+      newMessage.substring(0, atIndex) + selectedOption.value + " "; // Replace the @ and add the selected text
+    setNewMessage(updatedMessage);
+    setAutocompleteVisible(false); // Hide the dropdown after selection
+    inputRef.current.focus(); // Return focus to the input box
+  };
+
   useEffect(() => {
     // Load lastMessageCount from localStorage on component mount
     const storedMessageCount = localStorage.getItem("lastMessageCount");
@@ -150,6 +176,27 @@ const LiveFlightTable = (props) => {
     updateMessageCount(); // Check for new messages whenever chatMessages or sidebar state changes
   }, [chatMessages, isSidebarExpanded]);
 
+  const scrollToBottom = () => {
+    if (chatMessagesRef.current) {
+      chatMessagesRef.current.scrollTop = chatMessagesRef.current.scrollHeight;
+    }
+  };
+
+  useEffect(() => {
+    scrollToBottom(); // Scroll to the bottom whenever chatMessages change
+  }, [chatMessages]);
+
+  useEffect(() => {
+    if (isSidebarExpanded) {
+      scrollToBottom(); // Scroll to the bottom when the sidebar is expanded
+    }
+  }, [isSidebarExpanded]);
+
+  const highlightPilotName = (message, pilotName) => {
+    const regex = new RegExp(`(${pilotName})`, "gi");
+    return message.replace(regex, '<span class="highlight">$1</span>');
+  };
+
   return (
     <div className="root-container flex">
       {/* Sidebar */}
@@ -172,41 +219,77 @@ const LiveFlightTable = (props) => {
         </div>
         {isSidebarExpanded && (
           <div className="sidebar-content">
-            <div className="chat-messages">
+            <div className="chat-messages" ref={chatMessagesRef}>
               {chatMessages.length > 0 ? (
-                chatMessages.map((messageObj, index) => (
-                  <div
-                    key={messageObj.messageId || index}
-                    className={`chat-message ${
-                      props.identity &&
-                      props.identity.va_user &&
-                      messageObj.pilotId === props.identity.va_user.dbID
-                        ? "own-message"
-                        : "other-message"
-                    }`}
-                  >
-                    <span
-                      dangerouslySetInnerHTML={{
-                        __html: messageObj.pilot || "Unknown Pilot",
-                      }}
-                    ></span>
-                    {messageObj.message}
-                    <div className="timestamp">
-                      {new Date(messageObj.timestamp).toLocaleString()}
+                chatMessages.map((messageObj, index) => {
+                  const isHighlighted =
+                    props.identity?.va_user?.pilotRaw &&
+                    messageObj.message.includes(props.identity.va_user.pilotRaw);
+              
+                  return (
+                    <div
+                      key={messageObj.messageId || index}
+                      className={`chat-message ${
+                        props.identity &&
+                        props.identity.va_user &&
+                        messageObj.pilotId === props.identity.va_user.dbID
+                          ? "own-message"
+                          : "other-message"
+                      } ${
+                        isHighlighted
+                          ? "highlighted-message"
+                          : ""
+                      }`}
+                    >
+                      <span
+                        dangerouslySetInnerHTML={{
+                          __html: messageObj.pilot || "Unknown Pilot",
+                        }}
+                      ></span>
+                      <span
+                        dangerouslySetInnerHTML={{
+                          __html: highlightPilotName(
+                            messageObj.message,
+                            props.identity?.va_user?.pilotRaw || ""
+                          ),
+                        }}
+                      ></span>
+                      <div className="timestamp">
+                        {new Date(messageObj.timestamp).toLocaleString()}
+                      </div>
                     </div>
-                  </div>
-                ))
+                  );
+                })
               ) : (
                 <div className="no-messages">No messages yet</div>
               )}
             </div>
-            <div className="chat-input">
+            <div className="chat-input" style={{ position: "relative" }}>
               <input
+                ref={inputRef}
                 type="text"
                 value={newMessage}
-                onChange={(e) => setNewMessage(e.target.value)}
+                onChange={(e) => handleInputChange(e.target.value)}
                 placeholder="Type a message..."
+                style={{ flexGrow: 1, padding: "5px", marginRight: "10px" }}
               />
+              {autocompleteVisible && (
+                <div style={{ position: "absolute", bottom: "100%", left: 0, zIndex: 1000, width: "100%" }}>
+                  <Select
+                    options={autocompleteOptions.map((option) => ({ value: option, label: option }))}
+                    onChange={handleAutocompleteSelect}
+                    placeholder="Select a pilot"
+                    menuIsOpen={true} // Keep the dropdown open
+                    autoFocus={true} // Automatically focus the dropdown
+                    onMenuClose={() => setAutocompleteVisible(false)} // Ensure dropdown closes properly
+                    menuPlacement="top" // Make the dropdown drop "up"
+                    styles={{
+                      menu: (provided) => ({ ...provided, zIndex: 1000 }),
+                      control: (provided) => ({ ...provided, display: "none" }), // Hide the default input box of react-select
+                    }}
+                  />
+                </div>
+              )}
               <button onClick={handleSendMessage}>Send Message</button>
             </div>
           </div>
