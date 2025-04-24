@@ -84,10 +84,23 @@ const LiveFlightTable = (props) => {
     }
   };
 
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (newMessage.trim()) {
-      setChatMessages([...chatMessages, newMessage]);
-      setNewMessage("");
+      try {
+        await request({
+          url: baseUrl + "sendMessage",
+          method: "POST",
+          data: { message: newMessage },
+        });
+        setNewMessage(""); // Clear the input field
+        await getChatMessages(); // Fetch updated chat messages
+      } catch (error) {
+        console.error("Error sending message:", error);
+        notify("live-flights", null, null, {
+          message: "Failed to send message",
+          type: "danger",
+        });
+      }
     }
   };
 

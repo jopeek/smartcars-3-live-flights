@@ -108,6 +108,31 @@ module.exports = {
         },
       },
     },
+    post: {
+      sendMessage: {
+        description: "Endpoint to send a chat message",
+        handler: async (req, res) => {
+          try {
+            const formData = new URLSearchParams();
+            formData.append("message", req.body.message);
+
+            const response = await axios({
+              url: `${scIdentity.airline.settings.scriptURL}flights/sendMessage`,
+              method: "POST",
+              data: formData.toString(),
+              headers: {
+                Authorization: `Bearer ${scIdentity.va_user.session}`,
+                "Content-Type": "application/x-www-form-urlencoded",
+              },
+            });
+
+            return res.status(response.status).json(response.data);
+          } catch (error) {
+            log("Error while sending chat message", "error", error);
+            return res.status(500).json({ error: "Failed to send message" });
+          }
+        },
+      },
+    },
   },
-  post: {},
 };
