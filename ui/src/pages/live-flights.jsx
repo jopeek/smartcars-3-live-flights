@@ -19,6 +19,7 @@ const LiveFlightTable = (props) => {
   const [hasNewMessages, setHasNewMessages] = useState(false); // Track if there are new messages
   const [autocompleteOptions, setAutocompleteOptions] = useState([]); // Options for autocomplete
   const [autocompleteVisible, setAutocompleteVisible] = useState(false); // Autocomplete visibility
+  const [isSendDisabled, setIsSendDisabled] = useState(false); // State to track button disabled state
   const mapRef = useRef(null);
   const chatMessagesRef = useRef(null); // Reference for chat messages container
   const inputRef = useRef(null); // Reference for the input box
@@ -95,6 +96,7 @@ const LiveFlightTable = (props) => {
 
   const handleSendMessage = async () => {
     if (newMessage.trim()) {
+      setIsSendDisabled(true); // Disable the button
       try {
         await request({
           url: baseUrl + "sendMessage",
@@ -109,6 +111,8 @@ const LiveFlightTable = (props) => {
           message: "Failed to send message",
           type: "danger",
         });
+      } finally {
+        setIsSendDisabled(false); // Re-enable the button after messages are updated
       }
     }
   };
@@ -334,7 +338,13 @@ const LiveFlightTable = (props) => {
                   />
                 </div>
               )}
-              <button onClick={handleSendMessage}>Send Message</button>
+              <button
+                onClick={handleSendMessage}
+                disabled={isSendDisabled}
+                className={`btn ${isSendDisabled ? "btn-disabled" : ""}`}
+              >
+                {`${isSendDisabled ? "Sending ..." : "Send Message"}`}
+              </button>
             </div>
           </div>
         )}
