@@ -146,6 +146,12 @@ const LiveFlightTable = (props) => {
     inputRef.current.focus(); // Return focus to the input box
   };
 
+  const handleKeyPress = (event) => {
+    if (event.key === "Enter" && !isSendDisabled) {
+      handleSendMessage(); // Trigger the send message function
+    }
+  };
+
   useEffect(() => {
     // Load lastMessageCount from localStorage on component mount
     const storedMessageCount = localStorage.getItem("lastMessageCount");
@@ -315,6 +321,7 @@ const LiveFlightTable = (props) => {
                 type="text"
                 value={newMessage}
                 onChange={(e) => handleInputChange(e.target.value)}
+                onKeyPress={handleKeyPress} // Add key press handler
                 placeholder="Type a message..."
                 style={{ flexGrow: 1, padding: "5px", marginRight: "10px" }}
               />
